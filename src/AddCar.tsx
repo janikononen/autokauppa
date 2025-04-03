@@ -1,14 +1,26 @@
-import * as React from "react";
+import { useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import { Car } from "./types";
 
-export default function FormDialog() {
-  const [open, setOpen] = React.useState(false);
+type AddCarProps = {
+  fetchCars: () => void;
+};
+
+export default function Addcar(props: AddCarProps) {
+  const [open, setOpen] = useState(false);
+  const [car, setCar] = useState<Car>({
+    brand: "",
+    model: "",
+    color: "",
+    fuel: "",
+    modelYear: 0,
+    price: 0,
+  });
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -18,51 +30,120 @@ export default function FormDialog() {
     setOpen(false);
   };
 
+  const handleAfterSave = () => {
+    setCar({
+      brand: "",
+      model: "",
+      color: "",
+      fuel: "",
+      modelYear: 0,
+      price: 0,
+    });
+  };
+
+  const handleSave = () => {
+    fetch(import.meta.env.VITE_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify(car),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Error while adding car");
+
+        return response.json();
+      })
+      .then(() => handleAfterSave())
+      .then(() => props.fetchCars())
+      .then(() => handleClose())
+      .then((err) => console.log(err));
+  };
+
   return (
-    <React.Fragment>
-      <Button variant="outlined" onClick={handleClickOpen}>
-        Open form dialog
-      </Button>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        slotProps={{
-          paper: {
-            component: "form",
-            onSubmit: (event: React.FormEvent<HTMLFormElement>) => {
-              event.preventDefault();
-              const formData = new FormData(event.currentTarget);
-              const formJson = Object.fromEntries((formData as any).entries());
-              const email = formJson.email;
-              console.log(email);
-              handleClose();
-            },
-          },
-        }}
+    <>
+      <Button
+        style={{ margin: 10 }}
+        variant="outlined"
+        onClick={handleClickOpen}
+        color="success"
       >
-        <DialogTitle>Subscribe</DialogTitle>
+        Add Car
+      </Button>
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Add Car</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            To subscribe to this website, please enter your email address here.
-            We will send updates occasionally.
-          </DialogContentText>
           <TextField
             autoFocus
             required
             margin="dense"
-            id="name"
-            name="email"
-            label="Email Address"
-            type="email"
+            name="brand"
+            value={car.brand}
+            onChange={(e) => setCar({ ...car, brand: e.target.value })}
+            label="Brand"
             fullWidth
-            variant="standard"
+          />
+          <TextField
+            required
+            margin="dense"
+            name="model"
+            value={car.model}
+            onChange={(e) => setCar({ ...car, model: e.target.value })}
+            label="Model"
+            fullWidth
+          />
+          <TextField
+            required
+            margin="dense"
+            name="color"
+            value={car.color}
+            onChange={(e) => setCar({ ...car, color: e.target.value })}
+            label="Color"
+            fullWidth
+          />
+          <TextField
+            required
+            margin="dense"
+            name="fuel"
+            value={car.fuel}
+            onChange={(e) => setCar({ ...car, fuel: e.target.value })}
+            label="Fuel"
+            fullWidth
+          />
+          <TextField
+            required
+            margin="dense"
+            name="modelYear"
+            value={car.modelYear}
+            onChange={(e) =>
+              setCar({ ...car, modelYear: Number(e.target.value) })
+            }
+            label="Model Year"
+            fullWidth
+          />
+          <TextField
+            required
+            margin="dense"
+            name="price"
+            value={car.price}
+            onChange={(e) => setCar({ ...car, price: Number(e.target.value) })}
+            label="Price"
+            fullWidth
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button type="submit">Subscribe</Button>
+          <Button color="error" style={{ margin: 10 }} onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            color="success"
+            style={{ margin: 10 }}
+            onClick={() => handleSave()}
+          >
+            Add
+          </Button>
         </DialogActions>
       </Dialog>
-    </React.Fragment>
+    </>
   );
 }

@@ -5,62 +5,60 @@ import {
   ModuleRegistry,
   ColDef,
   ICellRendererParams,
+  themeMaterial,
 } from "ag-grid-community";
 import Button from "@mui/material/Button";
+import Snackbar from "@mui/material/Snackbar";
+import Addcar from "./AddCar";
+import { Car } from "./types";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function Carlist() {
-  type Car = {
-    brand: string;
-    model: string;
-    color: string;
-    fuel: string;
-    modelYear: number;
-    price: number;
-  };
   const [cars, setCars] = useState<Car[]>([]);
+  const [open, setOpen] = useState(false);
 
   const [columnDefs] = useState<ColDef<Car>[]>([
-    { field: "brand" },
-    { field: "model" },
-    { field: "color" },
-    { field: "fuel" },
-    { field: "modelYear" },
-    { field: "price" },
+    { field: "brand", sortable: true, filter: true, width: 150 },
+    { field: "model", sortable: true, filter: true, width: 150 },
+    { field: "color", sortable: true, filter: true, width: 150 },
+    { field: "fuel", sortable: true, filter: true, width: 150 },
+    { field: "modelYear", sortable: true, filter: true, width: 150 },
+    { field: "price", sortable: true, filter: true, width: 150 },
     {
       cellRenderer: (params: ICellRendererParams) => (
-        <Button color="error" onClick={() => handleDelete(params)}>
+        <Button
+          variant="outlined"
+          size="small"
+          color="error"
+          onClick={() => deleteCar(params)}
+        >
           Delete
         </Button>
       ),
     },
   ]);
 
-  const handleDelete = (params: ICellRendererParams) => {
-    console.log(params.data._links.car.href);
-    fetch(params.data._links.car.href, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Error while deleting car");
-
-        return response.json();
-      })
-      .then(() => fetchCars());
-  };
-
-  const defaultColDef = useMemo<ColDef>(() => {
-    return {
-      sortable: true,
-      filter: true,
-      width: 150,
-    };
-  }, []);
-
   useEffect(() => {
     fetchCars();
   }, []);
+
+  const deleteCar = (params: ICellRendererParams) => {
+    if (window.confirm("Are you sure?")) {
+      console.log(params.data._links.car.href);
+      fetch(params.data._links.car.href, {
+        method: "DELETE",
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error("Error while deleting car");
+
+          return response.json();
+        })
+        .then(() => fetchCars())
+        .then(() => setOpen(true))
+        .catch((error) => console.error(error));
+    }
+  };
 
   const fetchCars = () => {
     fetch(import.meta.env.VITE_API_URL)
@@ -73,12 +71,21 @@ export default function Carlist() {
       .catch((error) => console.error(error));
   };
   return (
-    <div style={{ height: 500, width: "100%" }}>
-      <AgGridReact
-        rowData={cars}
-        columnDefs={columnDefs}
-        defaultColDef={defaultColDef}
+    <>
+      <div style={{ height: 500 }}>
+        <Addcar fetchCars={fetchCars} />
+        <AgGridReact
+          rowData={cars}
+          columnDefs={columnDefs}
+          theme={themeMaterial}
+        />
+      </div>
+      <Snackbar
+        open={open}
+        autoHideDuration={2000}
+        onClose={() => setOpen(false)}
+        message="Car deleted"
       />
-    </div>
+    </>
   );
 }
