@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import {
   AllCommunityModule,
@@ -11,6 +11,7 @@ import Button from "@mui/material/Button";
 import Snackbar from "@mui/material/Snackbar";
 import Addcar from "./AddCar";
 import { Car } from "./types";
+import EditCar from "./EditCar";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -23,9 +24,16 @@ export default function Carlist() {
     { field: "model", sortable: true, filter: true, width: 150 },
     { field: "color", sortable: true, filter: true, width: 150 },
     { field: "fuel", sortable: true, filter: true, width: 150 },
-    { field: "modelYear", sortable: true, filter: true, width: 150 },
-    { field: "price", sortable: true, filter: true, width: 150 },
+    { field: "modelYear", sortable: true, filter: true, width: 120 },
+    { field: "price", sortable: true, filter: true, width: 120 },
     {
+      width: 120,
+      cellRenderer: (params: ICellRendererParams) => (
+        <EditCar data={params.data} fetchCars={fetchCars} />
+      ),
+    },
+    {
+      width: 150,
       cellRenderer: (params: ICellRendererParams) => (
         <Button
           variant="outlined"
@@ -45,7 +53,6 @@ export default function Carlist() {
 
   const deleteCar = (params: ICellRendererParams) => {
     if (window.confirm("Are you sure?")) {
-      console.log(params.data._links.car.href);
       fetch(params.data._links.car.href, {
         method: "DELETE",
       })
